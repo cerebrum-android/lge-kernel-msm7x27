@@ -63,6 +63,7 @@ extern int load_565rle_image(char *filename);
 static unsigned char *fbram;
 static unsigned char *fbram_phys;
 static int fbram_size;
+static boolean bf_supported;
 
 static struct platform_device *pdev_list[MSM_FB_MAX_DEV_LIST];
 static int pdev_list_cnt;
@@ -383,6 +384,8 @@ static int msm_fb_probe(struct platform_device *pdev)
 	mfd->overlay_play_enable = 1;
 #endif
 
+    bf_supported = mdp4_overlay_borderfill_supported();
+    
 	rc = msm_fb_register(mfd);
 	if (rc)
 		return rc;
@@ -1103,7 +1106,6 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 			    panel_info->mode2_yres * mfd->fb_page), PAGE_SIZE);
 
 
-
 	mfd->var_xres = panel_info->xres;
 	mfd->var_yres = panel_info->yres;
 
@@ -1225,7 +1227,9 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 	     mfd->index, fbi->var.xres, fbi->var.yres, fbi->fix.smem_len);
 
 #ifdef CONFIG_FB_MSM_LOGO
-	if (!load_565rle_image(INIT_IMAGE_FILE)) ;	/* Flip buffer */
+    /* Flip buffer */
+    if (!load_565rle_image(INIT_IMAGE_FILE, bf_supported))
+      ;
 #endif
 	ret = 0;
 
